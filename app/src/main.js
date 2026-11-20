@@ -1,22 +1,25 @@
-// Vice City Cover Studio — the editor.
+// Vice City Cover Studio — the editor (my own implementation).
 // Wires the page: photo slots, layout / grade / size pickers, per-panel
 // crop controls, caption editing, undo / redo, and one-click PNG export
 // at 1080 x 1080, 1080 x 1350 and 1920 x 1080. The live preview and the
-// export both draw through renderCover in ./cover.js, so what you see is
-// exactly what the PNG holds. A `?shot=` query sets up a fixed scene for
-// screenshots instead (./shots.js).
-import { defaultCoverState, layoutPanels, renderCover, GRADES, GRADE_NAMES, LAYOUTS, LAYOUT_NAMES, SIZES } from './cover.js';
+// export both paint through paintPoster in ./cover.js, so what you see
+// is exactly what the PNG holds. A `?shot=` query sets up a fixed scene
+// for screenshots instead (./shots.js).
+import {
+  defaultState, layoutRects, paintPoster,
+  GRADES, GRADE_NAMES, LAYOUTS, LAYOUT_NAMES, SIZES,
+} from './cover.js';
 import { runShot } from './shots.js';
 
 const $ = (id) => document.getElementById(id);
-const preview = $('preview');
-const state = defaultCoverState();
+const cv = $('cv');
+const state = defaultState();
 const photos = [null, null, null, null];
 const photoNames = ['Photo 1', 'Photo 2', 'Photo 3', 'Photo 4'];
 let selectedPanel = 0;
 let history = [];
 let historyIndex = -1;
-let suppressHistory = false;
+let holdHistory = false;
 
 const sizeById = (id) => SIZES.find((s) => s.id === id) || SIZES[0];
 
@@ -30,20 +33,20 @@ export function loadImage(url) {
   });
 }
 
-function stateSnapshot() {
+function snapshot() {
   return JSON.stringify({ ...state, panels: state.panels.map((p) => ({ ...p })) });
 }
 
 function pushHistory() {
-  if (suppressHistory) return;
+  if (holdHistory) return;
   history = history.slice(0, historyIndex + 1);
-  history.push(stateSnapshot());
+  history.push(snapshot());
   if (history.length > 40) history.shift();
   historyIndex = history.length - 1;
-  updateUndoButtons();
+  refreshUndo();
 }
 
-function applySnapshot(json) {
+function restore(json) {
   const next = JSON.parse(json);
   Object.assign(state, next);
   syncControls();
@@ -53,44 +56,42 @@ function applySnapshot(json) {
 function undo() {
   if (historyIndex <= 0) return;
   historyIndex -= 1;
-  suppressHistory = true;
-  applySnapshot(history[historyIndex]);
-  suppressHistory = false;
-  updateUndoButtons();
+  holdHistory = true;
+  restore(history[historyIndex]);
+  holdHistory = false;
+  refreshUndo();
 }
 
 function redo() {
   if (historyIndex >= history.length - 1) return;
   historyIndex += 1;
-  suppressHistory = true;
-  applySnapshot(history[historyIndex]);
-  suppressHistory = false;
-  updateUndoButtons();
+  holdHistory = true;
+  restore(history[historyIndex]);
+  holdHistory = false;
+  refreshUndo();
 }
 
-function updateUndoButtons() {
-  $('undo').disabled = historyIndex <= 0;
-  $('redo').disabled = historyIndex >= history.length - 1;
+function refreshUndo() {
+  $('undoBtn').disabled = historyIndex <= 0;
+  $('redoBtn').disabled = historyIndex >= history.length - 1;
 }
 
 /** Redraws the live preview at the current size's aspect ratio. */
 function redraw() {
   const size = sizeById(state.sizeId);
   const scale = Math.min(560 / size.w, 560 / size.h);
-  preview.width = Math.round(size.w * scale);
-  preview.height = Math.round(size.h * scale);
-  renderCover(preview, photos, state);
+  cv.width = Math.round(size.w * scale);
+  cv.height = Math.round(size.h * scale);
+  paintPoster(cv, photos, state);
   $('sizeLabel').textContent = `${size.w} x ${size.h}`;
-  updatePanelList();
+  updateChips();
 }
 
 /** Builds the layout / grade / size picker buttons once. */
 function buildPickers() {
-  const layoutBox = $('layoutPicker');
-  LAYOUTS.forEach((id) => {
+  for (const id of LAYOUTS) {
     const b = document.createElement('button');
     b.type = 'button';
-    b.className = 'pick';
     b.dataset.layout = id;
     b.textContent = LAYOUT_NAMES[id];
     b.addEventListener('click', () => {
@@ -100,13 +101,11 @@ function buildPickers() {
       syncControls();
       redraw();
     });
-    layoutBox.appendChild(b);
-  });
-  const gradeBox = $('gradePicker');
-  GRADES.forEach((id) => {
+    $('layoutRow').appendChild(b);
+  }
+  for (const id of GRADES) {
     const b = document.createElement('button');
     b.type = 'button';
-    b.className = 'pick grade';
     b.dataset.grade = id;
     b.textContent = GRADE_NAMES[id];
     b.addEventListener('click', () => {
@@ -115,13 +114,11 @@ function buildPickers() {
       syncControls();
       redraw();
     });
-    gradeBox.appendChild(b);
-  });
-  const sizeBox = $('sizePicker');
-  SIZES.forEach((s) => {
+    $('gradeRow').appendChild(b);
+  }
+  for (const s of SIZES) {
     const b = document.createElement('button');
     b.type = 'button';
-    b.className = 'pick';
     b.dataset.size = s.id;
     b.textContent = s.label;
     b.addEventListener('click', () => {
@@ -130,18 +127,18 @@ function buildPickers() {
       syncControls();
       redraw();
     });
-    sizeBox.appendChild(b);
-  });
+    $('sizeRow').appendChild(b);
+  }
 }
 
 /** Marks the active picker buttons and fills every control from state. */
 function syncControls() {
-  document.querySelectorAll('[data-layout]').forEach((b) => b.classList.toggle('active', b.dataset.layout === state.layout));
-  document.querySelectorAll('[data-grade]').forEach((b) => b.classList.toggle('active', b.dataset.grade === state.grade));
-  document.querySelectorAll('[data-size]').forEach((b) => b.classList.toggle('active', b.dataset.size === state.sizeId));
-  $('titleInput').value = state.title;
-  $('subtitleInput').value = state.subtitle;
-  $('titleStyle').value = state.titleStyle;
+  document.querySelectorAll('[data-layout]').forEach((b) => b.classList.toggle('on', b.dataset.layout === state.layout));
+  document.querySelectorAll('[data-grade]').forEach((b) => b.classList.toggle('on', b.dataset.grade === state.grade));
+  document.querySelectorAll('[data-size]').forEach((b) => b.classList.toggle('on', b.dataset.size === state.sizeId));
+  $('titleIn').value = state.title;
+  $('subIn').value = state.subtitle;
+  $('styleSel').value = state.titleStyle;
   $('onePhoto').checked = state.onePhoto;
   $('showPalms').checked = state.showPalms;
   $('halftone').checked = state.halftone;
@@ -149,30 +146,30 @@ function syncControls() {
   $('badge').checked = state.badge;
   $('stars').checked = state.stars;
   const slot = state.panels[selectedPanel] || { zoom: 1, ox: 0, oy: 0 };
-  $('zoom').value = slot.zoom;
-  $('panX').value = slot.ox;
-  $('panY').value = slot.oy;
+  $('zoomIn').value = slot.zoom;
+  $('panXIn').value = slot.ox;
+  $('panYIn').value = slot.oy;
   $('zoomVal').textContent = `${Math.round(slot.zoom * 100)}%`;
-  $('panelPhoto').value = String(slot.photo ?? 0);
-  $('panelLabel').textContent = `Panel ${selectedPanel + 1} of ${layoutPanels(state.layout).length}`;
+  $('photoSel').value = String(slot.photo ?? 0);
+  $('panelLabel').textContent = `Panel ${selectedPanel + 1} of ${layoutRects(state.layout).length}`;
 }
 
-/** Rebuilds the clickable panel strip under the preview. */
-function updatePanelList() {
-  const list = $('panelList');
-  const count = layoutPanels(state.layout).length;
-  list.innerHTML = '';
+/** Rebuilds the clickable panel chips under the preview. */
+function updateChips() {
+  const row = $('chipRow');
+  const count = layoutRects(state.layout).length;
+  row.innerHTML = '';
   for (let i = 0; i < count; i++) {
     const b = document.createElement('button');
     b.type = 'button';
-    b.className = 'panelChip' + (i === selectedPanel ? ' active' : '');
+    b.className = i === selectedPanel ? 'on' : '';
     b.textContent = `Panel ${i + 1}`;
     b.addEventListener('click', () => {
       selectedPanel = i;
       syncControls();
       redraw();
     });
-    list.appendChild(b);
+    row.appendChild(b);
   }
 }
 
@@ -182,20 +179,20 @@ async function setPhotoSlot(index, file) {
   photos[index] = await loadImage(URL.createObjectURL(file));
   photoNames[index] = file.name.length > 18 ? file.name.slice(0, 17) + '…' : file.name;
   $(`slotName${index}`).textContent = photoNames[index];
-  $(`slotThumb${index}`).textContent = '✓';
+  $(`slotMark${index}`).textContent = '✓';
   redraw();
 }
 
 /** Builds the four photo-slot cards. */
-function buildPhotoSlots() {
-  const box = $('photoSlots');
+function buildSlots() {
+  const box = $('slotRow');
   for (let i = 0; i < 4; i++) {
     const card = document.createElement('div');
     card.className = 'slot';
     card.innerHTML = `
-      <span class="thumb" id="slotThumb${i}">+</span>
-      <span class="slotName" id="slotName${i}">Photo ${i + 1} — empty</span>
-      <label class="slotBtn">Choose file
+      <span class="mark" id="slotMark${i}">+</span>
+      <span class="name" id="slotName${i}">Photo ${i + 1} — empty</span>
+      <label>Choose file
         <input type="file" accept="image/*" data-slot="${i}" hidden>
       </label>`;
     box.appendChild(card);
@@ -205,13 +202,13 @@ function buildPhotoSlots() {
   });
 }
 
-/** Exports the current cover at full resolution as a PNG download. */
+/** Renders the current poster at full resolution and downloads it as PNG. */
 export function exportCover(sizeId) {
   const size = sizeById(sizeId);
   const off = document.createElement('canvas');
   off.width = size.w;
   off.height = size.h;
-  renderCover(off, photos, { ...state, sizeId });
+  paintPoster(off, photos, { ...state, sizeId });
   return new Promise((resolve) => {
     off.toBlob((blob) => {
       const a = document.createElement('a');
@@ -225,11 +222,11 @@ export function exportCover(sizeId) {
 }
 
 function bindControls() {
-  $('titleInput').addEventListener('input', (e) => { state.title = e.target.value; redraw(); });
-  $('titleInput').addEventListener('change', pushHistory);
-  $('subtitleInput').addEventListener('input', (e) => { state.subtitle = e.target.value; redraw(); });
-  $('subtitleInput').addEventListener('change', pushHistory);
-  $('titleStyle').addEventListener('change', (e) => { state.titleStyle = e.target.value; pushHistory(); redraw(); });
+  $('titleIn').addEventListener('input', (e) => { state.title = e.target.value; redraw(); });
+  $('titleIn').addEventListener('change', pushHistory);
+  $('subIn').addEventListener('input', (e) => { state.subtitle = e.target.value; redraw(); });
+  $('subIn').addEventListener('change', pushHistory);
+  $('styleSel').addEventListener('change', (e) => { state.titleStyle = e.target.value; pushHistory(); redraw(); });
   const toggle = (id, key) => $(id).addEventListener('change', (e) => {
     state[key] = e.target.checked;
     pushHistory();
@@ -241,55 +238,55 @@ function bindControls() {
   toggle('grain', 'grain');
   toggle('badge', 'badge');
   toggle('stars', 'stars');
-  $('panelPhoto').addEventListener('change', (e) => {
+  $('photoSel').addEventListener('change', (e) => {
     state.panels[selectedPanel].photo = Number(e.target.value);
     state.onePhoto = false;
     $('onePhoto').checked = false;
     pushHistory();
     redraw();
   });
-  $('zoom').addEventListener('input', (e) => {
+  $('zoomIn').addEventListener('input', (e) => {
     state.panels[selectedPanel].zoom = Number(e.target.value);
     $('zoomVal').textContent = `${Math.round(state.panels[selectedPanel].zoom * 100)}%`;
     redraw();
   });
-  $('zoom').addEventListener('change', pushHistory);
-  $('panX').addEventListener('input', (e) => { state.panels[selectedPanel].ox = Number(e.target.value); redraw(); });
-  $('panX').addEventListener('change', pushHistory);
-  $('panY').addEventListener('input', (e) => { state.panels[selectedPanel].oy = Number(e.target.value); redraw(); });
-  $('panY').addEventListener('change', pushHistory);
-  $('resetCrop').addEventListener('click', () => {
+  $('zoomIn').addEventListener('change', pushHistory);
+  $('panXIn').addEventListener('input', (e) => { state.panels[selectedPanel].ox = Number(e.target.value); redraw(); });
+  $('panXIn').addEventListener('change', pushHistory);
+  $('panYIn').addEventListener('input', (e) => { state.panels[selectedPanel].oy = Number(e.target.value); redraw(); });
+  $('panYIn').addEventListener('change', pushHistory);
+  $('resetCropBtn').addEventListener('click', () => {
     state.panels[selectedPanel] = { ...state.panels[selectedPanel], zoom: 1, ox: 0, oy: 0 };
     pushHistory();
     syncControls();
     redraw();
   });
-  $('undo').addEventListener('click', undo);
-  $('redo').addEventListener('click', redo);
-  $('exportBtn').addEventListener('click', async () => {
+  $('undoBtn').addEventListener('click', undo);
+  $('redoBtn').addEventListener('click', redo);
+  $('dlBtn').addEventListener('click', async () => {
     const name = await exportCover(state.sizeId);
-    $('status').textContent = `Saved ${name} — share it anywhere.`;
+    $('statusLine').textContent = `Saved ${name} — share it anywhere.`;
   });
-  $('exportAllBtn').addEventListener('click', async () => {
+  $('dlAllBtn').addEventListener('click', async () => {
     for (const s of SIZES) await exportCover(s.id);
-    $('status').textContent = 'Saved all three sizes (1080 x 1080, 1080 x 1350, 1920 x 1080).';
+    $('statusLine').textContent = 'Saved all three sizes (1080 x 1080, 1080 x 1350, 1920 x 1080).';
   });
-  $('sampleBtn').addEventListener('click', async () => {
-    photos[0] = await loadImage('samples/boulevard.jpg');
-    photos[1] = await loadImage('samples/pier.jpg');
-    $('slotName0').textContent = 'boulevard.jpg';
-    $('slotName1').textContent = 'pier.jpg';
-    $('slotThumb0').textContent = '✓';
-    $('slotThumb1').textContent = '✓';
+  $('demoBtn').addEventListener('click', async () => {
+    photos[0] = await loadImage('samples/boulevard.png');
+    photos[1] = await loadImage('samples/pier.png');
+    $('slotName0').textContent = 'boulevard.png';
+    $('slotName1').textContent = 'pier.png';
+    $('slotMark0').textContent = '✓';
+    $('slotMark1').textContent = '✓';
     redraw();
-    $('status').textContent = 'Sample photos loaded — replace them with your own any time.';
+    $('statusLine').textContent = 'Sample photos loaded — replace them with your own any time.';
   });
   // Clicking the preview picks the panel under the pointer.
-  preview.addEventListener('click', (e) => {
-    const r = preview.getBoundingClientRect();
+  cv.addEventListener('click', (e) => {
+    const r = cv.getBoundingClientRect();
     const fx = (e.clientX - r.left) / r.width;
     const fy = (e.clientY - r.top) / r.height;
-    const rects = layoutPanels(state.layout);
+    const rects = layoutRects(state.layout);
     const idx = rects.findIndex((d) => fx >= d.x && fx <= d.x + d.w && fy >= d.y && fy <= d.y + d.h);
     if (idx >= 0) {
       selectedPanel = idx;
@@ -300,7 +297,7 @@ function bindControls() {
 }
 
 buildPickers();
-buildPhotoSlots();
+buildSlots();
 bindControls();
 syncControls();
 pushHistory();

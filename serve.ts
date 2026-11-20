@@ -10,30 +10,28 @@ import { extname, join, normalize, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = resolve(fileURLToPath(new URL('./app', import.meta.url)));
-const portArg = process.argv.indexOf('--port');
-const wanted = portArg === -1 ? 8080 : Number(process.argv[portArg + 1]);
+
+const portFlag = process.argv.indexOf('--port');
+const wanted = portFlag === -1 ? 8080 : Number(process.argv[portFlag + 1]);
 const port = Number.isInteger(wanted) && wanted > 0 && wanted < 65536 ? wanted : 8080;
 
-const MIME = {
-  '.html': 'text/html; charset=utf-8',
-  '.js': 'text/javascript; charset=utf-8',
-  '.mjs': 'text/javascript; charset=utf-8',
-  '.css': 'text/css; charset=utf-8',
-  '.json': 'application/json; charset=utf-8',
-  '.png': 'image/png',
-  '.jpg': 'image/jpeg',
-  '.jpeg': 'image/jpeg',
-  '.gif': 'image/gif',
-  '.webp': 'image/webp',
-  '.svg': 'image/svg+xml',
-  '.ico': 'image/x-icon',
-  '.woff2': 'font/woff2',
-  '.woff': 'font/woff',
-  '.ttf': 'font/ttf',
-  '.otf': 'font/otf',
-  '.wasm': 'application/wasm',
-  '.txt': 'text/plain; charset=utf-8',
-};
+function mimeFor(file) {
+  switch (extname(file).toLowerCase()) {
+    case '.html': return 'text/html; charset=utf-8';
+    case '.js':
+    case '.mjs': return 'text/javascript; charset=utf-8';
+    case '.css': return 'text/css; charset=utf-8';
+    case '.json': return 'application/json; charset=utf-8';
+    case '.png': return 'image/png';
+    case '.jpg':
+    case '.jpeg': return 'image/jpeg';
+    case '.webp': return 'image/webp';
+    case '.svg': return 'image/svg+xml';
+    case '.ico': return 'image/x-icon';
+    case '.txt': return 'text/plain; charset=utf-8';
+    default: return 'application/octet-stream';
+  }
+}
 
 createServer((request, response) => {
   const url = new URL(request.url ?? '/', 'http://localhost');
@@ -60,7 +58,7 @@ createServer((request, response) => {
     return;
   }
   response.writeHead(200, {
-    'content-type': MIME[extname(file).toLowerCase()] ?? 'application/octet-stream',
+    'content-type': mimeFor(file),
     'content-length': size,
     'cache-control': 'no-store',
   });
