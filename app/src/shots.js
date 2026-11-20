@@ -1,12 +1,12 @@
-// Fixed scenes for screenshots (my own implementation).
+// Fixed scenes for screenshots, written for this entry.
 // ?shot=editor shows the editor with the sample photos loaded;
 // ?shot=cover shows one exported poster alone, painted by the app
 // itself at the requested size. Query keys: photo, photo2, layout,
 // grade, size (1080x1080 | 1080x1350 | 1920x1080), caption, subtitle,
 // titleStyle, onePhoto. window.__shotReady is set once painted.
-import { SIZES, paintPoster } from './cover.js';
+import { SIZES, renderPoster } from './poster.js';
 
-export async function runShot(shot, query, state, photos, loadImage, redraw) {
+export async function runShot(shot, query, state, photos, loadImage, draw) {
   const first = query.get('photo') || 'boulevard';
   const second = query.get('photo2') || 'pier';
   if (query.get('layout')) state.layout = query.get('layout');
@@ -27,12 +27,12 @@ export async function runShot(shot, query, state, photos, loadImage, redraw) {
   if (shot === 'cover') {
     document.body.classList.add('shot-cover');
     const size = SIZES.find((s) => s.id === state.sizeId) || SIZES[0];
-    const canvas = document.getElementById('cv');
+    const canvas = document.getElementById('posterCanvas');
     canvas.width = size.w;
     canvas.height = size.h;
-    paintPoster(canvas, photos, state);
+    renderPoster(canvas, photos, state);
   } else {
-    redraw();
+    draw();
   }
   requestAnimationFrame(() => requestAnimationFrame(() => { window.__shotReady = true; }));
 }

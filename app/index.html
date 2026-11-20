@@ -7,54 +7,54 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<header class="topbar">
+<header class="masthead">
   <div>
     <h1>VICE CITY <span>COVER STUDIO</span></h1>
     <p>Turn your photos into a GTA-style poster. Everything runs in your browser — photos never leave this page.</p>
   </div>
-  <div class="top-actions">
+  <div class="masthead-actions">
     <button id="undoBtn" type="button" disabled>Undo</button>
     <button id="redoBtn" type="button" disabled>Redo</button>
   </div>
 </header>
 
-<main class="studio">
-  <section class="preview-col">
-    <div class="canvas-wrap">
-      <canvas id="cv" width="560" height="560"></canvas>
+<main class="workbench">
+  <section class="preview-pane">
+    <div class="frame">
+      <canvas id="posterCanvas" width="560" height="560"></canvas>
     </div>
-    <p class="size-line">Export size: <strong id="sizeLabel">1080 x 1080</strong></p>
-    <div id="chipRow" class="chips" aria-label="Panels"></div>
-    <p id="statusLine" class="status">Load a photo to start — or try the sample photos.</p>
+    <p class="size-note">Export size: <strong id="sizeText">1080 x 1080</strong></p>
+    <div id="cellChips" class="chips" aria-label="Cells"></div>
+    <p id="statusText" class="status">Load a photo to start — or try the sample photos.</p>
   </section>
 
-  <aside class="controls">
-    <section class="card">
+  <aside class="panel-stack">
+    <section class="panel">
       <h2>1 · Photos</h2>
-      <div id="slotRow" class="slots"></div>
+      <div id="photoSlots" class="slots"></div>
       <button id="demoBtn" type="button" class="wide">Load sample photos</button>
     </section>
 
-    <section class="card">
+    <section class="panel">
       <h2>2 · Layout</h2>
-      <div id="layoutRow" class="picks"></div>
+      <div id="layoutPicker" class="picks"></div>
     </section>
 
-    <section class="card">
+    <section class="panel">
       <h2>3 · Colour grade</h2>
-      <div id="gradeRow" class="picks"></div>
+      <div id="gradePicker" class="picks"></div>
     </section>
 
-    <section class="card">
+    <section class="panel">
       <h2>4 · Caption</h2>
       <label class="field">Title
-        <input id="titleIn" type="text" value="NEON SHORE" maxlength="40">
+        <input id="titleInput" type="text" value="NEON SHORE" maxlength="40">
       </label>
       <label class="field">Subtitle
-        <input id="subIn" type="text" value="sunset boulevard" maxlength="60">
+        <input id="subtitleInput" type="text" value="sunset boulevard" maxlength="60">
       </label>
       <label class="field">Title style
-        <select id="styleSel">
+        <select id="styleSelect">
           <option value="gradient">Sunset gradient</option>
           <option value="outline">Outline</option>
           <option value="solid">Solid white</option>
@@ -62,55 +62,56 @@
       </label>
     </section>
 
-    <section class="card">
+    <section class="panel">
       <h2>5 · Size &amp; finish</h2>
-      <div id="sizeRow" class="picks"></div>
+      <div id="sizePicker" class="picks"></div>
       <div class="toggles">
-        <label><input id="onePhoto" type="checkbox" checked> One photo for all panels</label>
-        <label><input id="showPalms" type="checkbox" checked> Palm silhouettes</label>
-        <label><input id="halftone" type="checkbox" checked> Halftone dots</label>
-        <label><input id="grain" type="checkbox" checked> Film grain</label>
-        <label><input id="badge" type="checkbox" checked> Sunset Edition badge</label>
-        <label><input id="stars" type="checkbox" checked> Five-star row</label>
+        <label><input id="onePhotoChk" type="checkbox" checked> One photo for all cells</label>
+        <label><input id="palmsChk" type="checkbox" checked> Palm silhouettes</label>
+        <label><input id="halftoneChk" type="checkbox" checked> Halftone dots</label>
+        <label><input id="grainChk" type="checkbox" checked> Film grain</label>
+        <label><input id="badgeChk" type="checkbox" checked> Sunset Edition badge</label>
+        <label><input id="starsChk" type="checkbox" checked> Five-star row</label>
+        <label><input id="skylineChk" type="checkbox" checked> Skyline strip</label>
       </div>
     </section>
 
-    <section class="card">
-      <h2>6 · Crop the selected panel</h2>
-      <p class="panel-line" id="panelLabel">Panel 1 of 4</p>
-      <label class="field">Photo for this panel
-        <select id="photoSel">
+    <section class="panel">
+      <h2>6 · Crop the selected cell</h2>
+      <p class="cell-note" id="cellLabel">Cell 1 of 4</p>
+      <label class="field">Photo for this cell
+        <select id="cellPhotoSel">
           <option value="0">Photo 1</option>
           <option value="1">Photo 2</option>
           <option value="2">Photo 3</option>
           <option value="3">Photo 4</option>
         </select>
       </label>
-      <label class="field">Zoom — <span id="zoomVal">100%</span>
-        <input id="zoomIn" type="range" min="1" max="3" step="0.05" value="1">
+      <label class="field">Zoom — <span id="zoomText">100%</span>
+        <input id="zoomRange" type="range" min="1" max="3" step="0.05" value="1">
       </label>
       <label class="field">Pan left / right
-        <input id="panXIn" type="range" min="-0.4" max="0.4" step="0.01" value="0">
+        <input id="panXRange" type="range" min="-0.4" max="0.4" step="0.01" value="0">
       </label>
       <label class="field">Pan up / down
-        <input id="panYIn" type="range" min="-0.4" max="0.4" step="0.01" value="0">
+        <input id="panYRange" type="range" min="-0.4" max="0.4" step="0.01" value="0">
       </label>
       <button id="resetCropBtn" type="button" class="wide">Reset crop</button>
     </section>
 
-    <section class="card export">
+    <section class="panel export">
       <h2>Export</h2>
-      <button id="dlBtn" type="button" class="primary wide">Download PNG</button>
-      <button id="dlAllBtn" type="button" class="wide">Download all three sizes</button>
+      <button id="exportBtn" type="button" class="primary wide">Download PNG</button>
+      <button id="exportAllBtn" type="button" class="wide">Download all three sizes</button>
       <p class="fine">PNGs are rendered on your machine at full resolution. No upload, no account, no network.</p>
     </section>
   </aside>
 </main>
 
-<footer class="foot">
+<footer class="colophon">
   Vice City Cover Studio — an offline cover maker. Original artwork only: no game logos, art or fonts.
 </footer>
 
-<script type="module" src="src/main.js"></script>
+<script type="module" src="src/editor.js"></script>
 </body>
 </html>

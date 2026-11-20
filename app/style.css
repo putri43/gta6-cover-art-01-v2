@@ -1,63 +1,63 @@
-/* Vice City Cover Studio — editor styles (my own theme). */
+/* Vice City Cover Studio — editor theme, written for this entry. */
 :root {
-  --plum: #150826;
-  --plum-2: #1f0d3a;
-  --panel: #241145;
-  --cream: #fdf6ec;
-  --ink: #f4ecff;
-  --muted: #b9a8d6;
-  --pink: #ff2e63;
-  --orange: #ff8a00;
-  --gold: #ffd319;
-  --line: #3d2364;
+  --night: #150826;
+  --night-2: #1f0d3a;
+  --card: #241145;
+  --paper: #fdf6ec;
+  --text: #f4ecff;
+  --dim: #b9a8d6;
+  --rose: #ff2e63;
+  --amber: #ff8a00;
+  --sun: #ffd319;
+  --edge: #3d2364;
 }
 
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
 body {
-  background: var(--plum);
-  color: var(--ink);
+  background: var(--night);
+  color: var(--text);
   font-family: "Helvetica Neue", Arial, sans-serif;
   line-height: 1.45;
 }
 
-.topbar {
+.masthead {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 16px;
   padding: 20px 24px 12px;
-  border-bottom: 2px solid var(--line);
+  border-bottom: 2px solid var(--edge);
 }
-.topbar h1 {
+.masthead h1 {
   margin: 0;
   font-family: "Arial Black", Arial, sans-serif;
   font-size: 30px;
   letter-spacing: 1px;
-  color: var(--cream);
+  color: var(--paper);
 }
-.topbar h1 span {
-  background: linear-gradient(90deg, var(--gold), var(--pink), #8c1eff);
+.masthead h1 span {
+  background: linear-gradient(90deg, var(--sun), var(--rose), #8c1eff);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
-.topbar p { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
-.top-actions { display: flex; gap: 8px; padding-top: 6px; }
+.masthead p { margin: 4px 0 0; color: var(--dim); font-size: 14px; }
+.masthead-actions { display: flex; gap: 8px; padding-top: 6px; }
 
 button {
   font: inherit;
   cursor: pointer;
-  border: 1px solid var(--line);
-  background: var(--panel);
-  color: var(--ink);
+  border: 1px solid var(--edge);
+  background: var(--card);
+  color: var(--text);
   border-radius: 8px;
   padding: 8px 14px;
 }
-button:hover:not(:disabled) { border-color: var(--pink); }
+button:hover:not(:disabled) { border-color: var(--rose); }
 button:disabled { opacity: 0.4; cursor: default; }
 button.primary {
-  background: linear-gradient(90deg, var(--pink), var(--orange));
+  background: linear-gradient(90deg, var(--rose), var(--amber));
   border: none;
   color: #fff;
   font-weight: 800;
@@ -65,7 +65,7 @@ button.primary {
 }
 button.wide { width: 100%; margin-top: 8px; }
 
-.studio {
+.workbench {
   display: grid;
   grid-template-columns: minmax(0, 1.15fr) minmax(300px, 0.85fr);
   gap: 20px;
@@ -73,26 +73,26 @@ button.wide { width: 100%; margin-top: 8px; }
   align-items: start;
 }
 @media (max-width: 900px) {
-  .studio { grid-template-columns: 1fr; }
+  .workbench { grid-template-columns: 1fr; }
 }
 
-.preview-col { min-width: 0; }
-.canvas-wrap {
+.preview-pane { min-width: 0; }
+.frame {
   background: #0d0318;
-  border: 2px solid var(--line);
+  border: 2px solid var(--edge);
   border-radius: 12px;
   padding: 12px;
   display: flex;
   justify-content: center;
 }
-.canvas-wrap canvas {
+.frame canvas {
   max-width: 100%;
   height: auto;
   display: block;
   border-radius: 6px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.55);
 }
-.size-line { color: var(--muted); margin: 10px 2px 0; }
+.size-note { color: var(--dim); margin: 10px 2px 0; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 .chips button {
   padding: 5px 10px;
@@ -100,56 +100,56 @@ button.wide { width: 100%; margin-top: 8px; }
   border-radius: 999px;
 }
 .chips button.on {
-  background: var(--pink);
-  border-color: var(--pink);
+  background: var(--rose);
+  border-color: var(--rose);
   color: #fff;
 }
-.status { color: var(--gold); font-size: 14px; margin: 10px 2px 0; min-height: 20px; }
+.status { color: var(--sun); font-size: 14px; margin: 10px 2px 0; min-height: 20px; }
 
-.controls { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
-.card {
-  background: var(--panel);
-  border: 1px solid var(--line);
+.panel-stack { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.panel {
+  background: var(--card);
+  border: 1px solid var(--edge);
   border-radius: 12px;
   padding: 14px 16px;
 }
-.card h2 {
+.panel h2 {
   margin: 0 0 10px;
   font-size: 15px;
   letter-spacing: 0.4px;
-  color: var(--gold);
+  color: var(--sun);
   text-transform: uppercase;
 }
 .picks { display: flex; flex-wrap: wrap; gap: 6px; }
 .picks button.on {
-  background: var(--pink);
-  border-color: var(--pink);
+  background: var(--rose);
+  border-color: var(--rose);
   color: #fff;
   font-weight: 700;
 }
-.field { display: block; margin-bottom: 10px; font-size: 14px; color: var(--muted); }
+.field { display: block; margin-bottom: 10px; font-size: 14px; color: var(--dim); }
 .field input[type="text"], .field select {
   display: block;
   width: 100%;
   margin-top: 4px;
   padding: 9px 10px;
   border-radius: 8px;
-  border: 1px solid var(--line);
-  background: var(--plum-2);
-  color: var(--ink);
+  border: 1px solid var(--edge);
+  background: var(--night-2);
+  color: var(--text);
   font: inherit;
 }
-.field input[type="range"] { width: 100%; margin-top: 4px; accent-color: var(--pink); }
+.field input[type="range"] { width: 100%; margin-top: 4px; accent-color: var(--rose); }
 .toggles label {
   display: block;
   font-size: 14px;
   padding: 3px 0;
   cursor: pointer;
 }
-.toggles input { accent-color: var(--pink); margin-right: 6px; }
+.toggles input { accent-color: var(--rose); margin-right: 6px; }
 .slots { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .slot {
-  border: 1px dashed var(--line);
+  border: 1px dashed var(--edge);
   border-radius: 10px;
   padding: 10px;
   display: flex;
@@ -160,38 +160,38 @@ button.wide { width: 100%; margin-top: 8px; }
 .slot .mark {
   width: 30px; height: 30px;
   border-radius: 8px;
-  background: var(--plum-2);
+  background: var(--night-2);
   display: flex; align-items: center; justify-content: center;
-  font-size: 18px; color: var(--gold);
+  font-size: 18px; color: var(--sun);
 }
-.slot .name { font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
+.slot .name { font-size: 13px; color: var(--dim); overflow-wrap: anywhere; }
 .slot label {
   font-size: 13px;
-  color: var(--pink);
+  color: var(--rose);
   cursor: pointer;
   text-decoration: underline;
 }
-.panel-line { margin: 0 0 10px; color: var(--muted); font-size: 14px; }
-.fine { font-size: 12px; color: var(--muted); margin: 10px 0 0; }
-.foot {
+.cell-note { margin: 0 0 10px; color: var(--dim); font-size: 14px; }
+.fine { font-size: 12px; color: var(--dim); margin: 10px 0 0; }
+.colophon {
   padding: 16px 24px 24px;
-  color: var(--muted);
+  color: var(--dim);
   font-size: 13px;
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--edge);
 }
 
 /* Screenshot mode: the cover fills the whole viewport. */
 body.shot-cover { background: #12041f; }
-body.shot-cover .topbar, body.shot-cover .controls,
-body.shot-cover .foot, body.shot-cover .size-line,
+body.shot-cover .masthead, body.shot-cover .panel-stack,
+body.shot-cover .colophon, body.shot-cover .size-note,
 body.shot-cover .chips, body.shot-cover .status { display: none; }
-body.shot-cover .studio { display: block; padding: 0; }
-body.shot-cover .preview-col { width: 100vw; height: 100vh; }
-body.shot-cover .canvas-wrap {
+body.shot-cover .workbench { display: block; padding: 0; }
+body.shot-cover .preview-pane { width: 100vw; height: 100vh; }
+body.shot-cover .frame {
   border: none; border-radius: 0; padding: 0;
   width: 100vw; height: 100vh; background: #12041f;
 }
-body.shot-cover .canvas-wrap canvas {
+body.shot-cover .frame canvas {
   width: 100vw; height: 100vh;
   object-fit: contain; border-radius: 0; box-shadow: none;
 }
