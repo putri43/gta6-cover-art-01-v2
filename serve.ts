@@ -1,65 +1,44 @@
-// A tiny static server for app/ (Node 22, standard library only), so
-// the entry can be tried locally without a build step:
-//   node serve.ts [--port 8080]
-// Serves app/ on http://localhost:8080. Development convenience only:
-// it answers with the MIME types an offline web app needs and refuses
-// any path that climbs outside app/.
-import { createReadStream, statSync } from 'node:fs';
-import { createServer } from 'node:http';
-import { extname, join, normalize, resolve, sep } from 'node:path';
-import { fileURLToPath } from 'node:url';
+// Tiny static server for the studio: serves app/ on localhost:8080 so the
+// poster maker can be tried in a browser. No build step, no network calls.
+import { createServer as makeServer } from "node:http";
+import { readFile as readIt } from "node:fs/promises";
+import { extname as suffixOf, join as joinPaths, normalize as tidy, dirname as parentDir } from "node:path";
+import { fileURLToPath as urlToPath } from "node:url";
 
-const root = resolve(fileURLToPath(new URL('./app', import.meta.url)));
+const root = joinPaths(parentDir(urlToPath(import.meta.url)), "app");
+const port = Number(process.env.PORT ?? 8080);
 
-const portArg = process.argv.indexOf('--port');
-const wanted = portArg === -1 ? 8080 : Number(process.argv[portArg + 1]);
-const port = Number.isInteger(wanted) && wanted > 0 && wanted < 65536 ? wanted : 8080;
-
-const MIME = {
-  '.html': 'text/html; charset=utf-8',
-  '.js': 'text/javascript; charset=utf-8',
-  '.mjs': 'text/javascript; charset=utf-8',
-  '.css': 'text/css; charset=utf-8',
-  '.json': 'application/json; charset=utf-8',
-  '.png': 'image/png',
-  '.jpg': 'image/jpeg',
-  '.jpeg': 'image/jpeg',
-  '.webp': 'image/webp',
-  '.svg': 'image/svg+xml',
-  '.ico': 'image/x-icon',
-  '.txt': 'text/plain; charset=utf-8',
+const kinds: Record<string, string> = {
+  ".html": "text/html; charset=utf-8",
+  ".css": "text/css; charset=utf-8",
+  ".js": "text/javascript; charset=utf-8",
+  ".mjs": "text/javascript; charset=utf-8",
+  ".json": "application/json; charset=utf-8",
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".svg": "image/svg+xml",
 };
 
-createServer((request, response) => {
-  const url = new URL(request.url ?? '/', 'http://localhost');
-  let pathname;
+const server = makeServer(async (req, res) => {
+  const raw = decodeURIComponent(new URL(req.url ?? "/", "http://x").pathname);
+  const rel = tidy(raw).replace(/^(\.\.[/\\])+/, "").replace(/^[/\\]/, "") || "index.html";
+  const file = joinPaths(root, rel);
+  if (!file.startsWith(root)) {
+    res.writeHead(403, { "content-type": "text/plain" });
+    res.end("nope\n");
+    return;
+  }
   try {
-    pathname = decodeURIComponent(url.pathname);
+    const body = await readIt(file);
+    res.writeHead(200, { "content-type": kinds[suffixOf(file)] ?? "application/octet-stream" });
+    res.end(body);
   } catch {
-    response.writeHead(400).end('bad request');
-    return;
+    res.writeHead(404, { "content-type": "text/plain" });
+    res.end("missing\n");
   }
-  if (pathname.endsWith('/')) pathname += 'index.html';
-  const file = resolve(join(root, normalize(pathname)));
-  if (file !== root && !file.startsWith(root + sep)) {
-    response.writeHead(403).end('forbidden');
-    return;
-  }
-  let size;
-  try {
-    const stats = statSync(file);
-    if (!stats.isFile()) throw new Error('not a file');
-    size = stats.size;
-  } catch {
-    response.writeHead(404).end('not found');
-    return;
-  }
-  response.writeHead(200, {
-    'content-type': MIME[extname(file).toLowerCase()] ?? 'application/octet-stream',
-    'content-length': size,
-    'cache-control': 'no-store',
-  });
-  createReadStream(file).pipe(response);
-}).listen(port, '127.0.0.1', () => {
-  console.log(`app/ is on http://localhost:${port}`);
+});
+
+server.listen(port, () => {
+  console.log(`Vice City Cover Studio at http://localhost:${port}`);
 });

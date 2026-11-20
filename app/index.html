@@ -3,115 +3,74 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Vice City Cover Studio</title>
+<title>Vice City Cover Studio — GTA 6 cover art maker</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<header class="masthead">
-  <div>
-    <h1>VICE CITY <span>COVER STUDIO</span></h1>
-    <p>Turn your photos into a GTA-style poster. Everything runs in your browser — photos never leave this page.</p>
+<header class="top">
+  <div class="brand">
+    <h1>Vice City <em>Cover Studio</em></h1>
+    <p>Turn any photo and a caption into a GTA 6-style cover. Offline, free, yours.</p>
   </div>
-  <div class="masthead-actions">
-    <button id="undoBtn" type="button" disabled>Undo</button>
-    <button id="redoBtn" type="button" disabled>Redo</button>
+  <div class="top-actions">
+    <button id="undoBtn" class="ghost" disabled>Undo</button>
+    <button id="redoBtn" class="ghost" disabled>Redo</button>
+    <button id="resetBtn" class="ghost">Reset</button>
+    <button id="exportBtn" class="loud">Export PNG</button>
   </div>
 </header>
 
-<main class="workbench">
-  <section class="preview-pane">
-    <div class="frame">
-      <canvas id="posterCanvas" width="560" height="560"></canvas>
+<main class="wrap">
+  <section class="stage-col">
+    <div class="canvas-shell">
+      <canvas id="stage" width="1080" height="1350"></canvas>
     </div>
-    <p class="size-note">Export size: <strong id="sizeText">1080 x 1080</strong></p>
-    <div id="cellChips" class="chips" aria-label="Cells"></div>
-    <p id="statusText" class="status">Load a photo to start — or try the sample photos.</p>
+    <p id="statusLine" class="status">Loading the studio…</p>
+    <p class="hint">Tip: pick a panel below, then zoom and pan its photo. Ctrl+Z undoes. The exported PNG is the poster at full size — no watermark, no upload.</p>
   </section>
 
-  <aside class="panel-stack">
-    <section class="panel">
-      <h2>1 · Photos</h2>
-      <div id="photoSlots" class="slots"></div>
-      <button id="demoBtn" type="button" class="wide">Load sample photos</button>
+  <aside class="controls">
+    <section class="block">
+      <h2>Layout</h2>
+      <div id="layoutRow" class="picks"></div>
     </section>
 
-    <section class="panel">
-      <h2>2 · Layout</h2>
-      <div id="layoutPicker" class="picks"></div>
+    <section class="block">
+      <h2>Grade</h2>
+      <div id="gradeRow" class="swatches"></div>
     </section>
 
-    <section class="panel">
-      <h2>3 · Colour grade</h2>
-      <div id="gradePicker" class="picks"></div>
+    <section class="block">
+      <h2>Caption</h2>
+      <label class="field"><span>Top line</span>
+        <input id="capTop" type="text" value="Grand Theft Auto VI" maxlength="48">
+      </label>
+      <label class="field"><span>Main line</span>
+        <input id="capMain" type="text" value="Vice City" maxlength="24">
+      </label>
+      <label class="check"><input id="skylineToggle" type="checkbox" checked> Lit skyline strip under the caption</label>
     </section>
 
-    <section class="panel">
-      <h2>4 · Caption</h2>
-      <label class="field">Title
-        <input id="titleInput" type="text" value="NEON SHORE" maxlength="40">
-      </label>
-      <label class="field">Subtitle
-        <input id="subtitleInput" type="text" value="sunset boulevard" maxlength="60">
-      </label>
-      <label class="field">Title style
-        <select id="styleSelect">
-          <option value="gradient">Sunset gradient</option>
-          <option value="outline">Outline</option>
-          <option value="solid">Solid white</option>
-        </select>
-      </label>
+    <section class="block">
+      <h2>Export size</h2>
+      <div id="sizeRow" class="picks"></div>
     </section>
 
-    <section class="panel">
-      <h2>5 · Size &amp; finish</h2>
-      <div id="sizePicker" class="picks"></div>
-      <div class="toggles">
-        <label><input id="onePhotoChk" type="checkbox" checked> One photo for all cells</label>
-        <label><input id="palmsChk" type="checkbox" checked> Palm silhouettes</label>
-        <label><input id="halftoneChk" type="checkbox" checked> Halftone dots</label>
-        <label><input id="grainChk" type="checkbox" checked> Film grain</label>
-        <label><input id="badgeChk" type="checkbox" checked> Sunset Edition badge</label>
-        <label><input id="starsChk" type="checkbox" checked> Five-star row</label>
-        <label><input id="skylineChk" type="checkbox" checked> Skyline strip</label>
-      </div>
-    </section>
-
-    <section class="panel">
-      <h2>6 · Crop the selected cell</h2>
-      <p class="cell-note" id="cellLabel">Cell 1 of 4</p>
-      <label class="field">Photo for this cell
-        <select id="cellPhotoSel">
-          <option value="0">Photo 1</option>
-          <option value="1">Photo 2</option>
-          <option value="2">Photo 3</option>
-          <option value="3">Photo 4</option>
-        </select>
-      </label>
-      <label class="field">Zoom — <span id="zoomText">100%</span>
-        <input id="zoomRange" type="range" min="1" max="3" step="0.05" value="1">
-      </label>
-      <label class="field">Pan left / right
-        <input id="panXRange" type="range" min="-0.4" max="0.4" step="0.01" value="0">
-      </label>
-      <label class="field">Pan up / down
-        <input id="panYRange" type="range" min="-0.4" max="0.4" step="0.01" value="0">
-      </label>
-      <button id="resetCropBtn" type="button" class="wide">Reset crop</button>
-    </section>
-
-    <section class="panel export">
-      <h2>Export</h2>
-      <button id="exportBtn" type="button" class="primary wide">Download PNG</button>
-      <button id="exportAllBtn" type="button" class="wide">Download all three sizes</button>
-      <p class="fine">PNGs are rendered on your machine at full resolution. No upload, no account, no network.</p>
+    <section class="block">
+      <h2>Panels</h2>
+      <div id="panelList"></div>
     </section>
   </aside>
 </main>
 
-<footer class="colophon">
-  Vice City Cover Studio — an offline cover maker. Original artwork only: no game logos, art or fonts.
+<footer class="foot">
+  <span>Built for the make.fun “Make GTA 6 Cover Art” bounty.</span>
+  <span>Photos stay on your machine.</span>
 </footer>
 
-<script type="module" src="src/editor.js"></script>
+<script src="src/presets.js"></script>
+<script src="src/skyline.js"></script>
+<script src="src/render.js"></script>
+<script src="src/studio.js"></script>
 </body>
 </html>
